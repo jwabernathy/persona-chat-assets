@@ -49,23 +49,44 @@
       sendButton.disabled = true;
       appendMessage(prompt, 'user');
 
-GM_xmlhttpRequest({
-  method: 'POST',
-  url: endpoint,
-  headers: { 'Content-Type': 'application/json' },
-  data: JSON.stringify({ prompt, personas }),
-  responseType: 'json',
-  onload(res) {
-    const data = res.response || {};
-    const reply = data.reply ?? 'No reply';
-    appendMessage(reply, 'bot');
-    sendButton.disabled = false;
-  },
-  onerror(err) {
-    appendMessage(`Error: ${err.message}`, 'bot');
-    sendButton.disabled = false;
-  }
-});
+async function sendMessage() {
+  const prompt = textarea.value.trim();
+  if (!prompt) return;
+  textarea.value = '';
+  sendButton.disabled = true;
+  appendMessage(prompt, 'user');
+
+  GM_xmlhttpRequest({
+    method: 'POST',
+    url: endpoint,
+    headers: { 'Content-Type': 'application/json' },
+    data: JSON.stringify({ prompt, personas }),
+    responseType: 'json',
+    onload(res) {
+      console.log('[Persona Chat] raw response →', res);
+      const data = res.response || {};
+      let reply = 'No reply';
+
+      if (typeof data.reply === 'string') {
+        reply = data.reply;
+      }
+      else if (data.choices?.[0]?.message?.content) {
+        reply = data.choices[0].message.content;
+      }
+      else if (data.choices?.[0]?.text) {
+        reply = data.choices[0].text;
+      }
+
+      appendMessage(reply, 'bot');
+      sendButton.disabled = false;
+    },
+    onerror(err) {
+      console.error('[Persona Chat] XHR error →', err);
+      appendMessage(`Error: ${err.message}`, 'bot');
+      sendButton.disabled = false;
+    }
+  });
+}
     }
 
     sendButton.addEventListener('click', sendMessage);
