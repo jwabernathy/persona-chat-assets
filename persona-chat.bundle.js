@@ -4,17 +4,13 @@
     const {
       containerId,
       personas = [],
-      endpoint = 'https://api.yourdomain.com/chat',
+      endpoint = 'https://bedpage.com/chat',
       debug = false
     } = config;
 
     if (debug) console.log('[Persona Chat] config →', config);
-
     const root = document.getElementById(containerId);
-    if (!root) {
-      console.error('[Persona Chat] container not found:', containerId);
-      return;
-    }
+    if (!root) return;
     root.innerHTML = '';
 
     const header = document.createElement('div');
@@ -51,7 +47,7 @@
       textarea.value = '';
       sendButton.disabled = true;
       appendMessage(prompt, 'user');
-      console.log('[Persona Chat] sendMessage →', prompt);
+      if (debug) console.log('[Persona Chat] sendMessage →', { prompt, endpoint });
 
       GM_xmlhttpRequest({
         method: 'POST',
@@ -60,21 +56,22 @@
         data: JSON.stringify({ prompt, personas }),
         responseType: 'json',
         onload(res) {
-          console.log('[Persona Chat] raw response →', res.response);
           const data = res.response || {};
           const reply =
             typeof data.reply === 'string'
               ? data.reply
               : data.choices?.[0]?.message?.content ||
                 data.choices?.[0]?.text ||
-                data.content ||
                 'No reply';
           appendMessage(reply, 'bot');
           sendButton.disabled = false;
         },
         onerror(err) {
           console.error('[Persona Chat] XHR error →', err);
-          appendMessage(`Error: ${err.message}`, 'bot');
+          const msg = err.status
+            ? `Error ${err.status}: ${err.statusText}`
+            : err.message || 'Unknown error';
+          appendMessage(msg, 'bot');
           sendButton.disabled = false;
         }
       });
