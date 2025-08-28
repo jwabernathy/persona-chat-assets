@@ -4,11 +4,12 @@
     const {
       containerId,
       personas = [],
-      endpoint = 'https://bedpage.com/chat',
+      endpoint,
+      apiKey,
       debug = false
     } = config;
 
-    if (debug) console.log('[Persona Chat] config →', config);
+    if (debug) console.log('[Persona Chat] config →', { endpoint, personas });
     const root = document.getElementById(containerId);
     if (!root) return;
     root.innerHTML = '';
@@ -47,31 +48,30 @@
       textarea.value = '';
       sendButton.disabled = true;
       appendMessage(prompt, 'user');
-      if (debug) console.log('[Persona Chat] sendMessage →', { prompt, endpoint });
 
       GM_xmlhttpRequest({
         method: 'POST',
         url: endpoint,
-        headers: { 'Content-Type': 'application/json' },
-        data: JSON.stringify({ prompt, personas }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + apiKey
+        },
+        data: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: prompt }
+          ]
+        }),
         responseType: 'json',
         onload(res) {
-          const data = res.response || {};
-          const reply =
-            typeof data.reply === 'string'
-              ? data.reply
-              : data.choices?.[0]?.message?.content ||
-                data.choices?.[0]?.text ||
-                'No reply';
+          const data = res.response;
+          const reply = data.choices?.[0]?.message?.content?.trim() || 'No reply';
           appendMessage(reply, 'bot');
           sendButton.disabled = false;
         },
         onerror(err) {
-          console.error('[Persona Chat] XHR error →', err);
-          const msg = err.status
-            ? `Error ${err.status}: ${err.statusText}`
-            : err.message || 'Unknown error';
-          appendMessage(msg, 'bot');
+          appendMessage(`Error: ${err.status || ''} ${err.statusText || err.message}`, 'bot');
           sendButton.disabled = false;
         }
       });
@@ -84,8 +84,6 @@
         sendMessage();
       }
     });
-
-    if (debug) console.log('[Persona Chat] initialized in', containerId);
   }
 
   window.initPersonaChat = initPersonaChat;
