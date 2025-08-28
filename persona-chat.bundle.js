@@ -58,34 +58,36 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // send logic
-    async function sendMessage() {
-      const prompt = textarea.value.trim();
-      if (!prompt) return;
-      textarea.value = '';
-      sendButton.disabled = true;
-      appendMessage(prompt, 'user');
+   // send logic
+async function sendMessage() {
+  const prompt = textarea.value.trim();
+  if (!prompt) return;
+  textarea.value = '';
+  sendButton.disabled = true;
+  appendMessage(prompt, 'user');
 
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, personas })
-        });
-        if (!res.ok) throw new Error(res.statusText);
-        const data = await res.json();
-        const reply =
-          data.reply ||
-          (data.choices && data.choices[0] && data.choices[0].message?.content) ||
-          'No reply';
-        appendMessage(reply, 'bot');
-      } catch (err) {
-        console.error('Persona Chat error:', err);
-        appendMessage(`Error: ${err.message}`, 'bot');
-      } finally {
-        sendButton.disabled = false;
-      }
+  GM_xmlhttpRequest({
+    method: 'POST',
+    url: endpoint,
+    headers: { 'Content-Type': 'application/json' },
+    data: JSON.stringify({ prompt, personas }),
+    responseType: 'json',
+    onload(res) {
+      const data = res.response;
+      const reply =
+        data.reply ||
+        (data.choices && data.choices[0] && data.choices[0].message?.content) ||
+        'No reply';
+      appendMessage(reply, 'bot');
+      sendButton.disabled = false;
+    },
+    onerror(err) {
+      console.error('Persona Chat error:', err);
+      appendMessage(`Error: ${err.message}`, 'bot');
+      sendButton.disabled = false;
     }
+  });
+}
 
     // wire events
     sendButton.addEventListener('click', sendMessage);
