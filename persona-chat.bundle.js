@@ -49,15 +49,16 @@
       sendButton.disabled = true;
       appendMessage(prompt, 'user');
 
-      GM_xmlhttpRequest({
+GM_xmlhttpRequest({
   method: 'POST',
   url: endpoint,
   headers: { 'Content-Type': 'application/json' },
   data: JSON.stringify({ prompt, personas }),
   responseType: 'json',
   onload(res) {
-    const data = res.response;
-    appendMessage(data.reply, 'bot');
+    const data = res.response || {};
+    const reply = data.reply ?? 'No reply';
+    appendMessage(reply, 'bot');
     sendButton.disabled = false;
   },
   onerror(err) {
