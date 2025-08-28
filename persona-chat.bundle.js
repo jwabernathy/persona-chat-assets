@@ -50,24 +50,21 @@
       appendMessage(prompt, 'user');
 
       GM_xmlhttpRequest({
-        method: 'POST',
-        url: endpoint,
-        headers: { 'Content-Type': 'application/json' },
-        data: JSON.stringify({ prompt, personas }),
-        responseType: 'json',
-        onload(res) {
-          const payload = res.response.json || {};
-          const reply = payload.prompt
-            ? `Echo: ${payload.prompt}`
-            : 'No reply';
-          appendMessage(reply, 'bot');
-          sendButton.disabled = false;
-        },
-        onerror(err) {
-          appendMessage(`Error: ${err.message}`, 'bot');
-          sendButton.disabled = false;
-        }
-      });
+  method: 'POST',
+  url: endpoint,
+  headers: { 'Content-Type': 'application/json' },
+  data: JSON.stringify({ prompt, personas }),
+  responseType: 'json',
+  onload(res) {
+    const data = res.response;
+    appendMessage(data.reply, 'bot');
+    sendButton.disabled = false;
+  },
+  onerror(err) {
+    appendMessage(`Error: ${err.message}`, 'bot');
+    sendButton.disabled = false;
+  }
+});
     }
 
     sendButton.addEventListener('click', sendMessage);
