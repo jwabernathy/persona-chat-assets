@@ -1,0 +1,68 @@
+/* persona-chat.css */
+#persona-chat-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  font-family: sans-serif;
+  background-color: #f9f9f9;
+}
+
+.persona-chat-header {
+  background-color: #007acc;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.persona-chat-messages {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.persona-chat-message {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.persona-chat-message.user {
+  text-align: right;
+  color: #007acc;
+}
+
+.persona-chat-message.bot {
+  text-align: left;
+  color: #333333;
+}
+
+.persona-chat-input {
+  display: flex;
+  border-top: 1px solid #dddddd;
+}
+
+.persona-chat-input textarea {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.4;
+  height: 60px;
+}
+
+.persona-chat-input button {
+  background-color: #007acc;
+  border: none;
+  color: #ffffff;
+  padding: 0 16px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.persona-chat-input button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
