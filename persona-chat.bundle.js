@@ -49,7 +49,8 @@
       sendButton.disabled = true;
       appendMessage(prompt, 'user');
 
-async function sendMessage() {
+function sendMessage() {
+  console.log('[Persona Chat] sendMessage invoked', { endpoint, personas });
   const prompt = textarea.value.trim();
   if (!prompt) return;
   textarea.value = '';
@@ -63,20 +64,13 @@ async function sendMessage() {
     data: JSON.stringify({ prompt, personas }),
     responseType: 'json',
     onload(res) {
-      console.log('[Persona Chat] raw response →', res);
+      console.log('[Persona Chat] raw response →', res.response);
       const data = res.response || {};
-      let reply = 'No reply';
-
-      if (typeof data.reply === 'string') {
-        reply = data.reply;
-      }
-      else if (data.choices?.[0]?.message?.content) {
-        reply = data.choices[0].message.content;
-      }
-      else if (data.choices?.[0]?.text) {
-        reply = data.choices[0].text;
-      }
-
+      const reply =
+        typeof data.reply === 'string' ? data.reply :
+        data.choices?.[0]?.message?.content ||
+        data.choices?.[0]?.text ||
+        'No reply';
       appendMessage(reply, 'bot');
       sendButton.disabled = false;
     },
@@ -87,6 +81,7 @@ async function sendMessage() {
     }
   });
 }
+
     }
 
     sendButton.addEventListener('click', sendMessage);
