@@ -12,10 +12,7 @@
     if (debug) console.log('[Persona Chat] config →', config);
 
     const root = document.getElementById(containerId);
-    if (!root) {
-      console.error('[Persona Chat] container not found:', containerId);
-      return;
-    }
+    if (!root) return;
     root.innerHTML = '';
 
     const header = document.createElement('div');
@@ -52,7 +49,6 @@
       textarea.value = '';
       sendButton.disabled = true;
       appendMessage(prompt, 'user');
-      if (debug) console.log('[Persona Chat] sendMessage →', prompt);
 
       GM_xmlhttpRequest({
         method: 'POST',
@@ -70,16 +66,12 @@
         }),
         responseType: 'json',
         onload(res) {
-          if (debug) console.log('[Persona Chat] raw response →', res.response);
           const data = res.response || {};
-          const reply =
-            data.choices?.[0]?.message?.content?.trim() ||
-            'No reply';
+          const reply = data.choices?.[0]?.message?.content?.trim() || 'No reply';
           appendMessage(reply, 'bot');
           sendButton.disabled = false;
         },
         onerror(err) {
-          console.error('[Persona Chat] XHR error →', err);
           const msg = err.status
             ? `Error ${err.status}: ${err.statusText}`
             : err.message || 'Unknown error';
