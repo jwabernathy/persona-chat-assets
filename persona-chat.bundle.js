@@ -8,7 +8,8 @@
       debug = false
     } = config;
 
-    if (debug) console.log('[Persona Chat] init config:', config);
+    if (debug) console.log('[Persona Chat] config →', config);
+
     const root = document.getElementById(containerId);
     if (!root) {
       console.error('[Persona Chat] container not found:', containerId);
@@ -45,12 +46,12 @@
     }
 
     function sendMessage() {
-      console.log('[Persona Chat] sendMessage', { endpoint, personas });
       const prompt = textarea.value.trim();
       if (!prompt) return;
       textarea.value = '';
       sendButton.disabled = true;
       appendMessage(prompt, 'user');
+      console.log('[Persona Chat] sendMessage →', prompt);
 
       GM_xmlhttpRequest({
         method: 'POST',
@@ -61,18 +62,13 @@
         onload(res) {
           console.log('[Persona Chat] raw response →', res.response);
           const data = res.response || {};
-          let reply = 'No reply';
-          if (typeof data.reply === 'string') {
-            reply = data.reply;
-          } else if (data.choices?.[0]?.message?.content) {
-            reply = data.choices[0].message.content;
-          } else if (data.choices?.[0]?.text) {
-            reply = data.choices[0].text;
-          } else if (data.content) {
-            reply = data.content;
-          } else if (data.result) {
-            reply = data.result;
-          }
+          const reply =
+            typeof data.reply === 'string'
+              ? data.reply
+              : data.choices?.[0]?.message?.content ||
+                data.choices?.[0]?.text ||
+                data.content ||
+                'No reply';
           appendMessage(reply, 'bot');
           sendButton.disabled = false;
         },
