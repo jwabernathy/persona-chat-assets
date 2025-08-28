@@ -1,26 +1,15 @@
 // persona-chat.bundle.js
 ;(function(window) {
-  /**
-   * Initialize the Persona Chat widget
-   * @param {Object} config
-   * @param {string} config.containerId
-   * @param {string[]} [config.personas]
-   * @param {string} [config.endpoint]
-   * @param {boolean} [config.debug]
-   */
   function initPersonaChat(config = {}) {
     const {
       containerId,
       personas = [],
-      endpoint = 'http://localhost:3000/chat',
+      endpoint = 'https://postman-echo.com/post',
       debug = false
     } = config;
 
     const root = document.getElementById(containerId);
-    if (!root) {
-      console.error('initPersonaChat: container not found:', containerId);
-      return;
-    }
+    if (!root) return;
     if (debug) console.log('initPersonaChat config:', config);
 
     root.innerHTML = '';
@@ -53,7 +42,7 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    async function sendMessage() {
+    function sendMessage() {
       const prompt = textarea.value.trim();
       if (!prompt) return;
       textarea.value = '';
@@ -67,16 +56,14 @@
         data: JSON.stringify({ prompt, personas }),
         responseType: 'json',
         onload(res) {
-          const data = res.response;
-          const reply =
-            data.reply ||
-            (data.choices && data.choices[0] && data.choices[0].message?.content) ||
-            'No reply';
+          const payload = res.response.json || {};
+          const reply = payload.prompt
+            ? `Echo: ${payload.prompt}`
+            : 'No reply';
           appendMessage(reply, 'bot');
           sendButton.disabled = false;
         },
         onerror(err) {
-          console.error('Persona Chat error:', err);
           appendMessage(`Error: ${err.message}`, 'bot');
           sendButton.disabled = false;
         }
@@ -84,7 +71,7 @@
     }
 
     sendButton.addEventListener('click', sendMessage);
-    textarea.addEventListener('keydown', (e) => {
+    textarea.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
