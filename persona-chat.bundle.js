@@ -9,9 +9,13 @@
       debug = false
     } = config;
 
-    if (debug) console.log('[Persona Chat] config →', { endpoint, personas });
+    if (debug) console.log('[Persona Chat] config →', config);
+
     const root = document.getElementById(containerId);
-    if (!root) return;
+    if (!root) {
+      console.error('[Persona Chat] container not found:', containerId);
+      return;
+    }
     root.innerHTML = '';
 
     const header = document.createElement('div');
@@ -42,44 +46,14 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-   function sendMessage() {
-  const prompt = textarea.value.trim();
-  if (!prompt) return;
-  textarea.value = '';
-  sendButton.disabled = true;
-  appendMessage(prompt, 'user');
+    function sendMessage() {
+      const prompt = textarea.value.trim();
+      if (!prompt) return;
+      textarea.value = '';
+      sendButton.disabled = true;
+      appendMessage(prompt, 'user');
+      if (debug) console.log('[Persona Chat] sendMessage →', prompt);
 
-  console.log('[Persona Chat] ➤ Sending to:', endpoint);
-  GM_xmlhttpRequest({
-    method: 'POST',
-    url: endpoint,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + apiKey
-    },
-    data: JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-        { role: 'user',   content: prompt }
-      ]
-    }),
-    responseType: 'json',
-    onload(res) {
-      console.log('[Persona Chat] ✔ Status:', res.status, res.statusText);
-      console.log('[Persona Chat] ✔ Response body:', res.response);
-      const data = res.response || {};
-      const reply = data.choices?.[0]?.message?.content?.trim() || 'No reply';
-      appendMessage(reply, 'bot');
-      sendButton.disabled = false;
-    },
-    onerror(err) {
-      console.error('[Persona Chat] ✖ XHR error:', err);
-      appendMessage(`Error: ${err.status || ''} ${err.statusText || err.message}`, 'bot');
-      sendButton.disabled = false;
-    }
-  });
-}
       GM_xmlhttpRequest({
         method: 'POST',
         url: endpoint,
@@ -96,13 +70,20 @@
         }),
         responseType: 'json',
         onload(res) {
-          const data = res.response;
-          const reply = data.choices?.[0]?.message?.content?.trim() || 'No reply';
+          if (debug) console.log('[Persona Chat] raw response →', res.response);
+          const data = res.response || {};
+          const reply =
+            data.choices?.[0]?.message?.content?.trim() ||
+            'No reply';
           appendMessage(reply, 'bot');
           sendButton.disabled = false;
         },
         onerror(err) {
-          appendMessage(`Error: ${err.status || ''} ${err.statusText || err.message}`, 'bot');
+          console.error('[Persona Chat] XHR error →', err);
+          const msg = err.status
+            ? `Error ${err.status}: ${err.statusText}`
+            : err.message || 'Unknown error';
+          appendMessage(msg, 'bot');
           sendButton.disabled = false;
         }
       });
