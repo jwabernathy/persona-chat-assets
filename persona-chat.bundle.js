@@ -42,13 +42,44 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    function sendMessage() {
-      const prompt = textarea.value.trim();
-      if (!prompt) return;
-      textarea.value = '';
-      sendButton.disabled = true;
-      appendMessage(prompt, 'user');
+   function sendMessage() {
+  const prompt = textarea.value.trim();
+  if (!prompt) return;
+  textarea.value = '';
+  sendButton.disabled = true;
+  appendMessage(prompt, 'user');
 
+  console.log('[Persona Chat] ➤ Sending to:', endpoint);
+  GM_xmlhttpRequest({
+    method: 'POST',
+    url: endpoint,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    data: JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user',   content: prompt }
+      ]
+    }),
+    responseType: 'json',
+    onload(res) {
+      console.log('[Persona Chat] ✔ Status:', res.status, res.statusText);
+      console.log('[Persona Chat] ✔ Response body:', res.response);
+      const data = res.response || {};
+      const reply = data.choices?.[0]?.message?.content?.trim() || 'No reply';
+      appendMessage(reply, 'bot');
+      sendButton.disabled = false;
+    },
+    onerror(err) {
+      console.error('[Persona Chat] ✖ XHR error:', err);
+      appendMessage(`Error: ${err.status || ''} ${err.statusText || err.message}`, 'bot');
+      sendButton.disabled = false;
+    }
+  });
+}
       GM_xmlhttpRequest({
         method: 'POST',
         url: endpoint,
