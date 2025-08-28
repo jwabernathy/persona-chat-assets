@@ -4,14 +4,16 @@
     const {
       containerId,
       personas = [],
-      endpoint = 'https://postman-echo.com/post',
+      endpoint = 'https://api.yourdomain.com/chat',
       debug = false
     } = config;
 
+    if (debug) console.log('[Persona Chat] init config:', config);
     const root = document.getElementById(containerId);
-    if (!root) return;
-    if (debug) console.log('initPersonaChat config:', config);
-
+    if (!root) {
+      console.error('[Persona Chat] container not found:', containerId);
+      return;
+    }
     root.innerHTML = '';
 
     const header = document.createElement('div');
@@ -43,45 +45,43 @@
     }
 
     function sendMessage() {
+      console.log('[Persona Chat] sendMessage', { endpoint, personas });
       const prompt = textarea.value.trim();
       if (!prompt) return;
       textarea.value = '';
       sendButton.disabled = true;
       appendMessage(prompt, 'user');
 
-function sendMessage() {
-  console.log('[Persona Chat] sendMessage invoked', { endpoint, personas });
-  const prompt = textarea.value.trim();
-  if (!prompt) return;
-  textarea.value = '';
-  sendButton.disabled = true;
-  appendMessage(prompt, 'user');
-
-  GM_xmlhttpRequest({
-    method: 'POST',
-    url: endpoint,
-    headers: { 'Content-Type': 'application/json' },
-    data: JSON.stringify({ prompt, personas }),
-    responseType: 'json',
-    onload(res) {
-      console.log('[Persona Chat] raw response →', res.response);
-      const data = res.response || {};
-      const reply =
-        typeof data.reply === 'string' ? data.reply :
-        data.choices?.[0]?.message?.content ||
-        data.choices?.[0]?.text ||
-        'No reply';
-      appendMessage(reply, 'bot');
-      sendButton.disabled = false;
-    },
-    onerror(err) {
-      console.error('[Persona Chat] XHR error →', err);
-      appendMessage(`Error: ${err.message}`, 'bot');
-      sendButton.disabled = false;
-    }
-  });
-}
-
+      GM_xmlhttpRequest({
+        method: 'POST',
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json' },
+        data: JSON.stringify({ prompt, personas }),
+        responseType: 'json',
+        onload(res) {
+          console.log('[Persona Chat] raw response →', res.response);
+          const data = res.response || {};
+          let reply = 'No reply';
+          if (typeof data.reply === 'string') {
+            reply = data.reply;
+          } else if (data.choices?.[0]?.message?.content) {
+            reply = data.choices[0].message.content;
+          } else if (data.choices?.[0]?.text) {
+            reply = data.choices[0].text;
+          } else if (data.content) {
+            reply = data.content;
+          } else if (data.result) {
+            reply = data.result;
+          }
+          appendMessage(reply, 'bot');
+          sendButton.disabled = false;
+        },
+        onerror(err) {
+          console.error('[Persona Chat] XHR error →', err);
+          appendMessage(`Error: ${err.message}`, 'bot');
+          sendButton.disabled = false;
+        }
+      });
     }
 
     sendButton.addEventListener('click', sendMessage);
@@ -92,7 +92,7 @@ function sendMessage() {
       }
     });
 
-    if (debug) console.log('Persona Chat initialized in', containerId);
+    if (debug) console.log('[Persona Chat] initialized in', containerId);
   }
 
   window.initPersonaChat = initPersonaChat;
